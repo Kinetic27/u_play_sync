@@ -95,23 +95,27 @@ def main():
         existing_files_map = get_existing_files(local_folder)
         print(f"Found {len(existing_files_map)} existing files in {local_folder}.")
 
-        # 3. 비교 및 다운로드 요청
-        added_count = 0
-        total_items = len(items)
-        for i, item in enumerate(items, 1):
+        # 3. 다운로드할 항목 선별
+        items_to_download = []
+        for item in items:
             title = item.get('title')
             if not title:
                 continue
 
             normalized_title = normalize_title(title)
             
-            if normalized_title in existing_files_map:
-                continue
-            
-            # 디버깅: 왜 매칭이 안 되었는지 확인할 수 있도록 로그를 남길 수도 있음
-            # print(f"DEBUG: No match for '{title}' (Normalized: '{normalized_title}')")
+            if normalized_title not in existing_files_map:
+                 items_to_download.append(item)
 
-            print(f"[{i}/{total_items}] Queueing download: {title}")
+        print(f"Identified {len(items_to_download)} items to download.")
+
+        # 4. 다운로드 요청
+        added_count = 0
+        total_to_download = len(items_to_download)
+        
+        for i, item in enumerate(items_to_download, 1):
+            title = item.get('title')
+            print(f"[{i}/{total_to_download}] Queueing download: {title}")
             video_url = item.get('url') or item.get('webpage_url')
             if video_url and not video_url.startswith('http'):
                  video_url = f"https://www.youtube.com/watch?v={video_url}"
