@@ -97,7 +97,8 @@ def main():
 
         # 3. 비교 및 다운로드 요청
         added_count = 0
-        for item in items:
+        total_items = len(items)
+        for i, item in enumerate(items, 1):
             title = item.get('title')
             if not title:
                 continue
@@ -110,7 +111,7 @@ def main():
             # 디버깅: 왜 매칭이 안 되었는지 확인할 수 있도록 로그를 남길 수도 있음
             # print(f"DEBUG: No match for '{title}' (Normalized: '{normalized_title}')")
 
-            print(f"Queueing download: {title}")
+            print(f"[{i}/{total_items}] Queueing download: {title}")
             video_url = item.get('url') or item.get('webpage_url')
             if video_url and not video_url.startswith('http'):
                  video_url = f"https://www.youtube.com/watch?v={video_url}"
