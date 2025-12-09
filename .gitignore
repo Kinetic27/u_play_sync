@@ -2,4 +2,5 @@ venv/
 __pycache__/
 *.pyc
 config.yaml
-archive.txt
+download_history.json
+id_map.json
