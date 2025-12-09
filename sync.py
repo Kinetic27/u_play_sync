@@ -3,12 +3,29 @@ import os
 import requests
 import yt_dlp
 import json
+import re
 
 CONFIG_FILE = 'config.yaml'
 
 def load_config():
     with open(CONFIG_FILE, 'r') as f:
         return yaml.safe_load(f)
+
+def normalize_title(s):
+    """
+    비교를 위해 문자열을 정규화합니다.
+    특수문자로 인한 차이(예: '|' vs '｜', '/' vs '_')를 무시하기 위해
+    알파벳, 숫자, 한글 등 주요 문자만 남기고 소문자로 변환합니다.
+    """
+    if not s:
+        return ""
+    # 유니코드 정규화는 생략하고, 간단히 특수문자 제거 방식을 사용
+    # \w: 알파벳, 숫자, _, 한글 등
+    # 특수문자를 공백으로 치환하여 단어 경계 유지
+    s = re.sub(r'[^\w\s]', ' ', s) 
+    # 연속된 공백을 하나로
+    s = re.sub(r'\s+', ' ', s)
+    return s.strip().lower()
 
 def get_playlist_items(playlist_url):
     """
@@ -27,17 +44,18 @@ def get_playlist_items(playlist_url):
 
 def get_existing_files(folder_path):
     """
-    로컬 폴더에 있는 파일들의 기본 이름(확장자 제외)을 반환합니다.
+    로컬 폴더에 있는 파일들을 정규화된 이름으로 매핑하여 반환합니다.
+    반환값: {normalized_name: original_filename}
     """
     if not os.path.exists(folder_path):
-        return set()
+        return {}
     
-    files = set()
+    files = {}
     for f in os.listdir(folder_path):
         # m4a 파일만 대상으로 하거나, 모든 파일을 대상으로 할 수 있습니다.
-        # 여기서는 파일명 매칭을 위해 확장자를 제거한 이름을 사용합니다.
         name, _ = os.path.splitext(f)
-        files.add(name)
+        norm_name = normalize_title(name)
+        files[norm_name] = f
     return files
 
 def send_to_metube(metube_url, video_url, folder_name):
@@ -74,37 +92,26 @@ def main():
 
         # 2. 로컬 파일 목록 가져오기
         local_folder = playlist['folder']
-        existing_files = get_existing_files(local_folder)
-        print(f"Found {len(existing_files)} existing files in {local_folder}.")
+        existing_files_map = get_existing_files(local_folder)
+        print(f"Found {len(existing_files_map)} existing files in {local_folder}.")
 
         # 3. 비교 및 다운로드 요청
         added_count = 0
         for item in items:
             title = item.get('title')
-            # yt-dlp might not resolve the full title in flat playlist mode sometimes, 
-            # but usually it does. The 'title' here is what we expect the filename to be.
-            # Warning: Special characters might be handled differently by filesystem/metube.
-            
-            # Simple check: if title is vaguely in existing files
-            # This is a weak point. existing files might have sanitized names.
-            # But let's try direct matching first as user requested.
-            
-            if title in existing_files:
+            if not title:
                 continue
 
-            # Check if file exists with sanitize logic roughly
-            # (Metube uses yt-dlp sanitization, so we rely on that)
-            # For now, if exact match fails, we assume it's new. 
-            # This might cause dupes if titles are slightly different (e.g. chars).
+            normalized_title = normalize_title(title)
             
-            # A safer check might be to see if we can find the title substring in existing files?
-            # Or just proceed. User warned about dupes.
+            if normalized_title in existing_files_map:
+                continue
+            
+            # 디버깅: 왜 매칭이 안 되었는지 확인할 수 있도록 로그를 남길 수도 있음
+            # print(f"DEBUG: No match for '{title}' (Normalized: '{normalized_title}')")
 
             print(f"Queueing download: {title}")
             video_url = item.get('url') or item.get('webpage_url')
-            # flat extraction gives 'url' usually as ID, need full URL? 
-            # yt-dlp flat extract 'url' is usually the video ID or partial. 
-            # Let's construct full URL to be safe if it looks like ID.
             if video_url and not video_url.startswith('http'):
                  video_url = f"https://www.youtube.com/watch?v={video_url}"
 
