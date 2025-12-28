@@ -138,12 +138,16 @@ def is_token_match(normalized_yt_title, existing_norm_name):
         return True
     return False
 
-def monitor_downloads(metube_url, expected_ids):
+def monitor_downloads(metube_url, expected_items):
     """
     MeTube 히스토리를 모니터링하여 ID를 파일명에 매핑합니다.
+    expected_items: [{'id': ..., 'title': ..., 'url': ...}]
     """
-    if not expected_ids:
+    if not expected_items:
         return
+
+    expected_ids = [item['id'] for item in expected_items]
+    items_info = {item['id']: item for item in expected_items}
 
     print(f"\n[모니터링] {len(expected_ids)}개의 항목 완료 대기 중...")
     id_map = load_id_map()
@@ -166,7 +170,9 @@ def monitor_downloads(metube_url, expected_ids):
                         status = item.get('status')
                         
                         if status == 'error' or item.get('msg') == 'error':
-                             print(f"  [오류] {vid}: {item.get('error') or '알 수 없는 오류'}")
+                             error_msg = item.get('error') or '알 수 없는 오류'
+                             title = items_info[vid].get('title', 'Unknown Title')
+                             print(f"  [오류] {title} ({vid}): {error_msg}")
                              found.append(vid)
                              continue
 
@@ -174,7 +180,8 @@ def monitor_downloads(metube_url, expected_ids):
                             # 경로 제거하고 파일명만 유지
                             filename = os.path.basename(filename)
                             id_map[vid] = filename
-                            print(f"  [완료] {vid} -> {filename}")
+                            title = items_info[vid].get('title', vid)
+                            print(f"  [완료] {title} -> {filename}")
                             found.append(vid)
                 
                 for vid in found:
@@ -190,7 +197,10 @@ def monitor_downloads(metube_url, expected_ids):
                 # They might be failed or cancelled
                 lost = [pid for pid in pending if pid not in active_ids]
                 for pid in lost:
-                    print(f"  [실종] {pid} 항목이 큐나 완료 목록에 없습니다. 실패/취소로 간주.")
+                    info = items_info.get(pid, {})
+                    title = info.get('title', '알 수 없음')
+                    url = info.get('url', f"https://youtu.be/{pid}")
+                    print(f"  [실종] {title} : {url} (취소/실패됨)")
                     pending.remove(pid)
                 
                 if not pending:
@@ -198,6 +208,7 @@ def monitor_downloads(metube_url, expected_ids):
                     break
                     
                 print(f"  ... {len(pending)}개 남음 (진행 중: {len([p for p in pending if p in active_ids])})")
+
             
             time.sleep(3)
         except KeyboardInterrupt:
@@ -258,7 +269,9 @@ def main():
     # We should monitor them too.
     for vid in down_history:
         if vid not in id_map:
-            total_newly_added.append(vid)
+             # We don't have title/url easily for history items unless we fetch again or store it.
+             # For now, just store ID. monitor_downloads will handle missing title gracefully.
+            total_newly_added.append({'id': vid, 'title': 'History Item', 'url': f"https://youtu.be/{vid}"})
             
     if total_newly_added:
         print(f"히스토리에서 모니터링할 대기 항목 {len(total_newly_added)}개를 로드했습니다.")
@@ -319,32 +332,6 @@ def main():
             if any(is_token_match(normalized_title, f) for f in existing_files_map):
                 continue
             
-            # Check download history (Sent previously)
-            # If ID match showed file missing, we ignored this check implicitly (because we didn't 'continue' there)
-            # But if ID was NOT in map, we are here.
-            # If ID is in down_history, it means we sent it before but we don't know the filename (not in map).
-            # This is the ambiguous case.
-            # If we Skip -> We might miss a file if user deleted it.
-            # If we Download -> We might create duplicate if it exists with diff name.
-            # Since we ran 'sync_id_map_from_metube' at start, 'id_map' SHOULD have it if it finished.
-            # So if it's in 'down_history' but not 'id_map', it likely failed or is still pending?
-            # Or MeTube history was cleared?
-            # To be safe and "accurate", we should probably skip to prevent loops, BUT user said "cleared list".
-            # Let's Skip if in history, unless user strictly wants force sync.
-            # Actually, let's trust 'id_map' more. If it's NOT in 'id_map', we assume valid payload to download?
-            # But "Mr. Hong" loop...
-            # If I download "Mr. Hong" again, MeTube will download "미스터 홍".
-            # Then I monitor -> Update id_map -> "ID=Hong" -> "미스터 홍".
-            # Next run: "ID=Hong" -> "미스터 홍" exists? Yes -> Skip.
-            # So the loop is broken by id_map!
-            # So we CAN safely re-download even if in down_history, because monitoring will fix it for next time.
-            # So I will REMOVE the down_history check to ensure we catch deleted files.
-            # Re-downloading duplicates once is better than missing files forever.
-            # And monitoring ensures it only happens once.
-            
-            # if vid in down_history:
-            #    continue
-
             items_to_download.append(item)
 
         print(f"다운로드할 항목 {len(items_to_download)}개를 식별했습니다.")
@@ -352,7 +339,7 @@ def main():
         # 5. 다운로드 요청
         added_count = 0
         total_to_download = len(items_to_download)
-        current_batch_ids = []
+        current_batch_items = []
         
         for i, item in enumerate(items_to_download, 1):
             vid = item.get('id')
@@ -366,10 +353,10 @@ def main():
             if send_to_metube(metube_url, video_url, pl['metube_folder']):
                 added_count += 1
                 down_history.add(vid)
-                current_batch_ids.append(vid)
+                current_batch_items.append({'id': vid, 'title': title, 'url': video_url})
         
-        if current_batch_ids:
-            total_newly_added.extend(current_batch_ids)
+        if current_batch_items:
+            total_newly_added.extend(current_batch_items)
             save_download_history(down_history)
             
     # 6. Global Monitoring (Monitor all added items across all playlists)

@@ -1,0 +1,424 @@
+:root {
+    --primary-color: #00ffff;
+    --secondary-color: #ff00ff;
+    --bg-dark: #0f0c29;
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --text-color: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #0f0c29; /* Fallback color */
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto; 
+    color: var(--text-color);
+    padding: 20px 0;
+    position: relative; /* Ensure stacking context */
+}
+
+/* Fixed Background Gradient */
+.background-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    z-index: -2; /* Behind blobs */
+}
+
+/* Background Blobs for Atmosphere */
+.background-blobs {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(120px); /* Increased blur for diffusion */
+    opacity: 0.3; /* Reduced opacity for subtlety */
+    animation: float 10s infinite ease-in-out;
+}
+
+.blob-1 {
+    top: -10%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: var(--secondary-color);
+    animation-delay: 0s;
+}
+
+.blob-2 {
+    bottom: -10%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: var(--primary-color);
+    animation-delay: 2s;
+}
+
+.blob-3 {
+    top: 40%;
+    left: 40%;
+    width: 300px;
+    height: 300px;
+    background: #7b2cbf;
+    animation-delay: 4s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 50px); }
+}
+
+/* Glass Container */
+.glass-container {
+    position: relative;
+    z-index: 10;
+    width: 90%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid var(--glass-border);
+    padding: 3rem;
+    /* Redundant, but specified in instruction */
+    width: 90%;
+    max-width: 1200px; /* Reduced max-width slightly for tighter look */
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    display: flex;
+    flex-direction: column;
+    
+    /* Fixed Height to prevent expanding with logs */
+    height: 45vh; /* User preference: even more compact */
+    min-height: 450px; /* Ensure minimum usability */
+    max-height: 900px;
+    overflow: hidden; /* clean corners */
+    position: relative; /* Context for blobs */
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    position: relative;
+    z-index: 2; /* Above blobs */
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo i {
+    color: #ff0000;
+    margin-right: 10px;
+}
+
+.status-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    box-shadow: 0 0 5px #ccc;
+}
+
+.status-badge.running .dot {
+    background: #00ff00;
+    box-shadow: 0 0 5px #00ff00;
+}
+
+.status-badge.error .dot {
+    background: #ff0000;
+    box-shadow: 0 0 5px #ff0000;
+}
+
+/* Content */
+main {
+    flex: 1;
+    /* overflow: hidden; Removed to allow button shadows to bleed */
+    position: relative;
+    z-index: 2; /* Above blobs */
+    height: 100%; /* Fill space */
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Slightly larger console area */
+    gap: 4rem;
+    align-items: center; /* Center items vertically so they don't stretch to full height */
+    width: 100%;
+    height: 100%;
+}
+
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center text vertically */
+    align-items: flex-start; /* Left align text */
+    text-align: left;
+    max-width: none;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    font-weight: 700;
+}
+
+.hero-section p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 2.5rem;
+    word-break: keep-all; /* Prevent awkward word breaks in Korean */
+}
+
+/* Buttons */
+.glow-button {
+    padding: 15px 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    background: transparent;
+    border: 2px solid var(--primary-color);
+    border-radius: 50px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+}
+
+.glow-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.5), transparent);
+    transition: 0.5s;
+}
+
+.glow-button:hover::before {
+    left: 100%;
+}
+
+.glow-button:hover {
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+    background: rgba(0, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.glow-button.stop {
+    border-color: #ff5f56;
+    box-shadow: 0 0 15px rgba(255, 95, 86, 0.3);
+}
+
+.glow-button.stop::before {
+    background: linear-gradient(90deg, transparent, rgba(255, 95, 86, 0.5), transparent);
+}
+
+.glow-button.stop:hover {
+    box-shadow: 0 0 30px rgba(255, 95, 86, 0.6);
+    background: rgba(255, 95, 86, 0.1);
+}
+
+.glow-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    border-color: #555;
+    box-shadow: none;
+}
+
+/* Console Window */
+.console-window {
+    width: 100%;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* Compact fixed dimensions */
+    height: 500px; 
+    
+    min-height: 250px;
+    max-height: 80vh; /* Prevent overflowing on small screens */
+}
+
+.console-header {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.console-controls {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.red { background-color: #ff5f56; }
+.yellow { background-color: #ffbd2e; }
+.green { background-color: #27c93f; }
+
+.console-title {
+    font-size: 0.9rem;
+    color: #ccc;
+    font-family: monospace;
+}
+
+.console-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #ddd;
+    scroll-behavior: smooth;
+}
+
+.console-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.console-body::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+}
+
+.console-body::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}
+
+/* Logs */
+.log-line {
+    margin-bottom: 4px;
+    word-wrap: break-word;
+}
+
+.log-line.system { color: #888; font-style: italic; }
+.log-line.error { color: #ff5f56; }
+.log-line.success { color: #27c93f; }
+.log-line.highlight { color: var(--primary-color); }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .content-wrapper {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr; /* Stack: Hero (auto), Console (fill rest) */
+        gap: 1rem;
+    }
+
+    .hero-section {
+        align-items: center;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    .hero-section h1 {
+        font-size: 2.5rem;
+    }
+    
+/* Fix background on mobile scrolling */
+html {
+    height: 100%;
+}
+
+@media (max-width: 900px) {
+    .glass-container {
+        height: auto;
+        min-height: 85vh;
+        margin: 2rem 0;
+        /* Ensure it doesn't overflow horizontally */
+        width: 90%; 
+    }
+    
+    /* Constraint log window height on mobile */
+    .console-window {
+        min-height: 300px;
+        max-height: 60vh; /* Don't exceed 60% of viewport height */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .console-body {
+        /* Force scroll within the body part */
+        flex-grow: 1;
+        overflow-y: auto;
+        min-height: 0; 
+    }
+}
+
+@media (max-width: 480px) {
+    .glass-container {
+        width: 95%;
+        height: auto;
+        min-height: 80vh;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+
+    .logo {
+        font-size: 1.4rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .glow-button {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
+}

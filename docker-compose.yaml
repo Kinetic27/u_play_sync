@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  uplaysync:
+    build: .
+    container_name: uplaysync
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./download_history.json:/app/download_history.json
+      - ./id_map.json:/app/id_map.json
+      # Host download folder <-> Container mapping
+      # Mapping to the exact same path so config.yaml paths work
+      - /opt/youtube_dl/downloads:/opt/youtube_dl/downloads
+    environment:
+      - PYTHONUNBUFFERED=1
+
+    extra_hosts:
+      - "localhost:host-gateway" # Allows container to reach host's localhost
+    restart: unless-stopped
+    # networks:
+    #   - metube-net
+
+# networks:
+#   metube-net:
+#     external: true
+
