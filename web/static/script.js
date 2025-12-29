@@ -109,4 +109,182 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto scroll to bottom
         logContainer.scrollTop = logContainer.scrollHeight;
     }
+
+    // Modal Elements
+    const configBtn = document.getElementById('configBtn');
+    const configModal = document.getElementById('configModal');
+    const closeModals = document.querySelectorAll('.close-modal');
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    const addPlaylistBtn = document.getElementById('addPlaylistBtn');
+    const playlistContainer = document.getElementById('playlistContainer');
+    const metubeUrlInput = document.getElementById('metubeUrl');
+    const scheduleIntervalInput = document.getElementById('scheduleInterval');
+    const playlistItemTemplate = document.getElementById('playlistItemTemplate');
+    
+    // History Elements
+    const historyBtn = document.getElementById('historyBtn');
+    const historyModal = document.getElementById('historyModal');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const historySearch = document.getElementById('historySearch');
+
+    let currentConfig = {};
+    let fullHistory = []; // Store full history for searching
+
+    // --- Modal Logic ---
+    function openModal(modal) {
+        modal.style.display = 'block';
+    }
+
+    function closeModal(modal) {
+        modal.style.display = 'none';
+    }
+
+    configBtn.addEventListener('click', () => {
+        openModal(configModal);
+        fetchConfig();
+    });
+    
+    historyBtn.addEventListener('click', () => {
+        openModal(historyModal);
+        fetchHistory();
+    });
+
+    closeModals.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            closeModal(e.target.closest('.modal'));
+        });
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            closeModal(e.target);
+        }
+    });
+
+    // --- History Logic ---
+    function fetchHistory() {
+        fetch('/api/history')
+            .then(res => res.json())
+            .then(data => {
+                // Convert object {id: filename} to array [{id, filename}]
+                fullHistory = Object.entries(data).map(([id, filename]) => ({ id, filename }));
+                renderHistory(fullHistory);
+            })
+            .catch(err => console.error('Error fetching history:', err));
+    }
+
+    function renderHistory(items) {
+        historyTableBody.innerHTML = '';
+        if (items.length === 0) {
+            historyTableBody.innerHTML = '<tr><td colspan="2" style="text-align:center; padding: 2rem; color: #888;">기록이 없습니다.</td></tr>';
+            return;
+        }
+
+        items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span class="id-badge">${item.id}</span></td>
+                <td>${item.filename}</td>
+            `;
+            historyTableBody.appendChild(row);
+        });
+    }
+
+    historySearch.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = fullHistory.filter(item => 
+            item.id.toLowerCase().includes(searchTerm) || 
+            item.filename.toLowerCase().includes(searchTerm)
+        );
+        renderHistory(filtered);
+    });
+
+    // --- Config Logic ---
+    addPlaylistBtn.addEventListener('click', () => addPlaylistItem());
+    saveConfigBtn.addEventListener('click', saveConfig);
+
+
+    function fetchConfig() {
+        fetch('/api/config')
+            .then(res => res.json())
+            .then(data => {
+                currentConfig = data;
+                metubeUrlInput.value = data.metube_url || '';
+                scheduleIntervalInput.value = data.schedule_interval || 0;
+                
+                const lastRunDisplay = document.getElementById('lastRunDisplay');
+                if (data.last_run) {
+                    lastRunDisplay.innerHTML = `<i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> 최근 실행: ${data.last_run}`;
+                } else {
+                    lastRunDisplay.innerHTML = '<i class="fa-solid fa-clock"></i> 최근 실행: 기록 없음';
+                }
+
+                renderPlaylists(data.playlists || []);
+            })
+            .catch(err => alert('설정을 불러오는 중 오류가 발생했습니다: ' + err));
+    }
+
+    function renderPlaylists(playlists) {
+        playlistContainer.innerHTML = '';
+        playlists.forEach(pl => addPlaylistItem(pl));
+    }
+
+    function addPlaylistItem(pl = {}) {
+        const clone = playlistItemTemplate.content.cloneNode(true);
+        const itemDiv = clone.querySelector('.playlist-item');
+        
+        itemDiv.querySelector('.pl-name').value = pl.name || '';
+        itemDiv.querySelector('.pl-url').value = pl.url || '';
+        itemDiv.querySelector('.pl-folder').value = pl.folder || '';
+        itemDiv.querySelector('.pl-metube').value = pl.metube_folder || '';
+        
+        itemDiv.querySelector('.delete-btn').addEventListener('click', () => {
+            itemDiv.remove();
+        });
+
+        playlistContainer.appendChild(itemDiv);
+    }
+
+    function saveConfig() {
+        const newPlaylists = [];
+        const items = playlistContainer.querySelectorAll('.playlist-item');
+        
+        items.forEach(item => {
+            const name = item.querySelector('.pl-name').value.trim();
+            const url = item.querySelector('.pl-url').value.trim();
+            const folder = item.querySelector('.pl-folder').value.trim();
+            const metube_folder = item.querySelector('.pl-metube').value.trim();
+            
+            if (name && url && folder) {
+                newPlaylists.push({
+                    name, 
+                    url, 
+                    folder,
+                    metube_folder: metube_folder || undefined
+                });
+            }
+        });
+
+        const newConfig = {
+            metube_url: metubeUrlInput.value.trim(),
+            schedule_interval: parseInt(scheduleIntervalInput.value) || 0,
+            playlists: newPlaylists
+        };
+
+        fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newConfig)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('설정이 저장되었습니다.');
+                configModal.style.display = 'none';
+            } else {
+                alert('저장 실패: ' + data.error);
+            }
+        })
+        .catch(err => alert('저장 중 오류 발생: ' + err));
+    }
 });

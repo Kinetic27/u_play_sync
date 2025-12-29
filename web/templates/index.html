@@ -7,7 +7,7 @@
     <!-- Favicon: Red Play Button -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><polygon points=%2235,30 35,70 75,50%22 fill=%22%23ffffff%22/></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
     <div class="background-gradient"></div>
@@ -23,18 +23,27 @@
             <div class="logo">
                 <i class="fa-brands fa-youtube" style="color: #ff0000;"></i> UPlaySync
             </div>
-            <div class="status-badge" id="statusBadge">
-                <span class="dot"></span> <span id="statusText">대기 중</span>
+            <div class="header-controls">
+                <div class="status-badge" id="statusBadge">
+                    <span class="dot"></span>
+                    <span id="statusText">대기 중</span>
+                </div>
+                <button id="historyBtn" class="icon-button" title="다운로드 기록">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+                <button id="configBtn" class="icon-button" title="설정">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
         </header>
 
         <main>
             <div class="content-wrapper">
                 <div class="hero-section">
-                    <h1>Playlist Synchronizer</h1>
-                    <p>YouTube 플레이리스트를 MeTube와 자동으로 동기화하고 관리하세요.</p>
+                    <h1>Playlist<br>Synchronizer</h1>
+                    <p>YouTube 플레이리스트를 미디어 서버와 자동으로 동기화하고 관리하세요.</p>
                     
-                    <div class="button-group">
+                    <div class="action-buttons">
                         <button id="runBtn" class="glow-button">
                             <i class="fa-solid fa-bolt"></i> 동기화 시작
                         </button>
@@ -46,11 +55,11 @@
 
                 <div class="console-window">
                     <div class="console-header">
-                        <span class="console-title"><i class="fa-solid fa-terminal"></i> 실시간 로그</span>
+                        <div class="console-title">_ 실시간 로그</div>
                         <div class="console-controls">
-                            <span class="control red"></span>
-                            <span class="control yellow"></span>
-                            <span class="control green"></span>
+                            <div class="control red"></div>
+                            <div class="control yellow"></div>
+                            <div class="control green"></div>
                         </div>
                     </div>
                     <div class="console-body" id="logContainer">
@@ -60,6 +69,89 @@
             </div>
         </main>
     </div>
+
+    <!-- Settings Modal -->
+    <div id="configModal" class="modal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fa-solid fa-cog"></i> 설정</h2>
+            
+            <div class="config-section">
+                <h3>미디어 서버 주소</h3>
+                <div class="config-card">
+                    <input type="text" id="metubeUrl" placeholder="http://localhost:8081">
+                </div>
+            </div>
+
+            <div class="config-section">
+                <h3>자동 동기화 주기</h3>
+                <div class="config-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <label for="scheduleInterval" style="margin:0; color:#ddd;">실행 주기 (시간 단위)</label>
+                        <span id="lastRunDisplay" style="font-size: 0.85rem; color: #aaa;"><i class="fa-solid fa-clock-rotate-left"></i> 최근 실행: 없음</span>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="scheduleInterval" placeholder="0" min="0" style="width: 120px; font-weight: bold;">
+                        <span style="color: #aaa;">시간 마다 실행</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #666; margin-top: 8px; margin-left: 5px;">
+                        * 0으로 설정하면 자동 동기화가 꺼집니다.
+                    </div>
+                </div>
+            </div>
+    
+            <div class="config-section">
+                <h3>플레이리스트 관리</h3>
+                <div id="playlistContainer" class="playlist-list">
+                    <!-- Dynamic Playlist Items -->
+                </div>
+                <button id="addPlaylistBtn" class="action-button small"><i class="fa-solid fa-plus"></i> 추가</button>
+            </div>
+    
+            <div class="modal-actions">
+                <button id="saveConfigBtn" class="glow-button small">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content glass-panel history-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> 다운로드 기록</h2>
+            
+            <div class="search-bar">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" id="historySearch" placeholder="파일명 또는 ID 검색...">
+            </div>
+
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>파일명 (Title)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Dynamic History Items -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for Playlist Item -->
+    <template id="playlistItemTemplate">
+        <div class="playlist-item">
+            <input type="text" class="pl-name" placeholder="이름 (예: K-Pop)">
+            <input type="text" class="pl-url" placeholder="YouTube Playlist URL">
+            <input type="text" class="pl-folder" placeholder="저장 폴더 (/music)">
+            <input type="text" class="pl-metube" placeholder="서버 내 경로 (optional)">
+            <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
+        </div>
+    </template>
 
     <script src="/static/script.js"></script>
 </body>
