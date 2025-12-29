@@ -85,18 +85,27 @@
 
             <div class="config-section">
                 <h3>자동 동기화 주기</h3>
-                <div class="config-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <label for="scheduleInterval" style="margin:0; color:#ddd;">실행 주기 (시간 단위)</label>
-                        <span id="lastRunDisplay" style="font-size: 0.85rem; color: #aaa;"><i class="fa-solid fa-clock-rotate-left"></i> 최근 실행: 없음</span>
+                <div class="config-card" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px;">
+                    <!-- Left: Compact Controls -->
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="color: #ddd; font-size: 0.95rem; font-weight: 500;">시간 단위 실행</span>
+                        
+                        <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                            <button class="spin-btn small" id="decreaseInterval"><i class="fa-solid fa-minus"></i></button>
+                            <div style="position: relative; width: 60px;">
+                                <input type="text" id="scheduleInterval" inputmode="numeric" pattern="[0-9]*" placeholder="0" style="width: 100%; text-align: center; font-weight: bold; border: none; background: transparent; height: 30px; font-size: 1rem;">
+                            </div>
+                            <button class="spin-btn small" id="increaseInterval"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        
+                        <span style="font-size: 0.8rem; color: #666; margin-left: 5px;">
+                            (0 입력 시 비활성화)
+                        </span>
                     </div>
-                    
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <input type="number" id="scheduleInterval" placeholder="0" min="0" style="width: 120px; font-weight: bold;">
-                        <span style="color: #aaa;">시간 마다 실행</span>
-                    </div>
-                    <div style="font-size: 0.8rem; color: #666; margin-top: 8px; margin-left: 5px;">
-                        * 0으로 설정하면 자동 동기화가 꺼집니다.
+
+                    <!-- Right: Simple Last Run -->
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="lastRunDisplay" style="font-size: 0.9rem; color: #aaa; font-family: monospace;">기록 없음</span>
                     </div>
                 </div>
             </div>

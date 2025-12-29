@@ -166,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/history')
             .then(res => res.json())
             .then(data => {
-                // Convert object {id: filename} to array [{id, filename}]
-                fullHistory = Object.entries(data).map(([id, filename]) => ({ id, filename }));
+                // Convert object {id: filename} to array [{id, filename}] and reverse to show latest first
+                fullHistory = Object.entries(data).map(([id, filename]) => ({ id, filename })).reverse();
                 renderHistory(fullHistory);
             })
             .catch(err => console.error('Error fetching history:', err));
@@ -200,6 +200,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Config Logic ---
+    const decreaseBtn = document.getElementById('decreaseInterval');
+    const increaseBtn = document.getElementById('increaseInterval');
+
+    decreaseBtn.addEventListener('click', () => {
+        let val = parseInt(scheduleIntervalInput.value) || 0;
+        if (val > 0) {
+            scheduleIntervalInput.value = val - 1;
+        }
+    });
+
+    increaseBtn.addEventListener('click', () => {
+        let val = parseInt(scheduleIntervalInput.value) || 0;
+        scheduleIntervalInput.value = val + 1;
+    });
+
+
+
+    // Validate number input for scheduleInterval (since we changed it to type="text")
+    scheduleIntervalInput.addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/[^0-9]/g, '');
+    });
+
     addPlaylistBtn.addEventListener('click', () => addPlaylistItem());
     saveConfigBtn.addEventListener('click', saveConfig);
 

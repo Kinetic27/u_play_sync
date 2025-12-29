@@ -155,7 +155,7 @@ def save_config():
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
-    id_map_path = os.path.join(BASE_DIR, 'id_map.json')
+    id_map_path = os.path.join(PROJECT_ROOT, 'id_map.json')
     try:
         if not os.path.exists(id_map_path):
             return jsonify({}) # Return empty object if no history yet
