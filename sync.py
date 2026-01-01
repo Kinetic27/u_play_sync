@@ -13,8 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("sync_debug.log", encoding='utf-8')
+        logging.StreamHandler()
     ]
 )
 
@@ -191,10 +190,26 @@ def monitor_downloads(metube_url, expected_items):
                              error_msg = item.get('error') or '알 수 없는 오류'
                              title = items_info[vid].get('title', 'Unknown Title')
                              print(f"  [오류] {title} ({vid}): {error_msg}")
+                             
+                             # Record failure to prevent infinite retries
+                             # Using a special prefix to identify failed items
+                             failed_mark = f"ERROR: {error_msg}"
+                             
+                             if vid in id_map:
+                                 del id_map[vid]
+                             id_map[vid] = failed_mark
+                             
+                             # Add to history so user can see it failed
+                             if vid in down_history:
+                                 down_history.remove(vid)
+                             down_history.append(vid)
+                             
                              found.append(vid)
+                             history_changed = True # Save history to show errors
                              continue
 
                         if filename:
+                            # 경로 제거하고 파일명만 유지
                             # 경로 제거하고 파일명만 유지
                             filename = os.path.basename(filename)
                             
@@ -322,16 +337,7 @@ def main():
     
     total_newly_added = []
     
-    # Identify items that were sent previously but not yet mapped (Pending resolution)
-    # We should monitor them too.
-    for vid in down_history:
-        if vid not in id_map:
-             # We don't have title/url easily for history items unless we fetch again or store it.
-             # For now, just store ID. monitor_downloads will handle missing title gracefully.
-            total_newly_added.append({'id': vid, 'title': 'History Item', 'url': f"https://youtu.be/{vid}"})
-            
-    if total_newly_added:
-        print(f"히스토리에서 모니터링할 대기 항목 {len(total_newly_added)}개를 로드했습니다.")
+
 
     for pl in playlists:
         print(f"\n플레이리스트 처리 중: {pl['name']}")
