@@ -7,6 +7,7 @@ import yaml
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import json # Added for get_history, was missing in original
+import datetime
 
 app = Flask(__name__)
 
@@ -44,12 +45,14 @@ def update_scheduler():
             with open(CONFIG_FILE_PATH, 'r') as f:
                 config = yaml.safe_load(f)
             
-            interval = config.get('schedule_interval', 0)
+            interval = int(config.get('schedule_interval', 0))
+            print(f"[Scheduler] Configured interval: {interval} hours (Type: {type(interval)})")
             
             # Remove existing job
             existing_job = scheduler.get_job('auto_sync')
             if existing_job:
                 existing_job.remove()
+                print("[Scheduler] Removed existing auto_sync job.")
             
             if interval > 0:
                 # interval is in hours
@@ -57,14 +60,20 @@ def update_scheduler():
                     run_sync_job, 
                     'interval', 
                     hours=interval, 
-                    id='auto_sync',
+                    id='auto_sync', 
                     replace_existing=True
                 )
                 print(f"[Scheduler] Auto sync scheduled every {interval} hours.")
+                # Print next run time for verification
+                job = scheduler.get_job('auto_sync')
+                if job:
+                    print(f"[Scheduler] Next run at: {job.next_run_time}")
             else:
-                print("[Scheduler] Auto sync disabled.")
+                print("[Scheduler] Auto sync disabled (interval is 0).")
     except Exception as e:
         print(f"[Scheduler] Error updating scheduler: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Initialize scheduler on startup
 update_scheduler()
@@ -126,9 +135,21 @@ def get_config():
         
         # Merge status info
         if os.path.exists(STATUS_FILE_PATH):
-            with open(STATUS_FILE_PATH, 'r') as f:
-                status = json.load(f)
-                config['last_run'] = status.get('last_run')
+            try:
+                with open(STATUS_FILE_PATH, 'r') as f:
+                    content = f.read().strip()
+                    if content:
+                        status = json.loads(content)
+                        config['last_run'] = status.get('last_run')
+            except Exception as e:
+                print(f"[API] Warning: Failed to parse status.json: {e}")
+        
+        # Get next run time from scheduler
+        job = scheduler.get_job('auto_sync')
+        if job and job.next_run_time:
+            config['next_run'] = job.next_run_time.strftime('%Y-%m-%d %H:%M:%S')
+        else:
+            config['next_run'] = None
                 
         return jsonify(config)
     except Exception as e:
@@ -138,6 +159,8 @@ def get_config():
 def save_config():
     try:
         new_config = request.json
+        print(f"[API] Received config save request: {new_config}")
+        
         if not new_config:
             return jsonify({'error': 'No data provided'}), 400
             

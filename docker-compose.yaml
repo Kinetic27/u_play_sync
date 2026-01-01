@@ -15,9 +15,10 @@ services:
       - /opt/youtube_dl/downloads:/opt/youtube_dl/downloads
     environment:
       - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
 
     extra_hosts:
-      - "localhost:host-gateway" # Allows container to reach host's localhost
+      - "host.docker.internal:host-gateway" # Standard way to reach host
     restart: unless-stopped
     # networks:
     #   - metube-net

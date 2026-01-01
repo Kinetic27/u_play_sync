@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- History Logic ---
     function fetchHistory() {
-        fetch('/api/history')
+        fetch('/api/history?t=' + new Date().getTime())
             .then(res => res.json())
             .then(data => {
                 // Convert object {id: filename} to array [{id, filename}] and reverse to show latest first
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function fetchConfig() {
-        fetch('/api/config')
+        fetch('/api/config?t=' + new Date().getTime())
             .then(res => res.json())
             .then(data => {
                 currentConfig = data;
@@ -236,9 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const lastRunDisplay = document.getElementById('lastRunDisplay');
                 if (data.last_run) {
-                    lastRunDisplay.innerHTML = `<i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> 최근 실행: ${data.last_run}`;
+                    lastRunDisplay.textContent = data.last_run;
                 } else {
-                    lastRunDisplay.innerHTML = '<i class="fa-solid fa-clock"></i> 최근 실행: 기록 없음';
+                    lastRunDisplay.textContent = '없음';
+                }
+
+                const nextRunDisplay = document.getElementById('nextRunDisplay');
+                if (data.next_run) {
+                    nextRunDisplay.textContent = data.next_run;
+                } else {
+                    nextRunDisplay.textContent = '비활성';
                 }
 
                 renderPlaylists(data.playlists || []);

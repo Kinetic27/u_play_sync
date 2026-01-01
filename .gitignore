@@ -4,3 +4,4 @@ __pycache__/
 config.yaml
 download_history.json
 id_map.json
+config.yaml.bak

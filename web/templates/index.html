@@ -103,9 +103,14 @@
                         </span>
                     </div>
 
-                    <!-- Right: Simple Last Run -->
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span id="lastRunDisplay" style="font-size: 0.9rem; color: #aaa; font-family: monospace;">기록 없음</span>
+                    <!-- Right: Status -->
+                    <div style="flex: 1; text-align: right; display: flex; flex-direction: column; justify-content: center; gap: 3px;">
+                        <div style="font-size: 0.8rem; color: #aaa;">
+                            <span style="color: #666;">최근:</span> <span id="lastRunDisplay" style="font-family: monospace;">-</span>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #aaa;">
+                            <span style="color: #666;">예정:</span> <span id="nextRunDisplay" style="color:var(--primary-color); font-weight:bold; font-family: monospace;">-</span>
+                        </div>
                     </div>
                 </div>
             </div>
