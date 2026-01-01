@@ -10,6 +10,7 @@ services:
       - ./config.yaml:/app/config.yaml
       - ./download_history.json:/app/download_history.json
       - ./id_map.json:/app/id_map.json
+      - ./sync_debug.log:/app/sync_debug.log
       # Host download folder <-> Container mapping
       # Mapping to the exact same path so config.yaml paths work
       - /opt/youtube_dl/downloads:/opt/youtube_dl/downloads

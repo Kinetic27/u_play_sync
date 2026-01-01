@@ -6,6 +6,18 @@ import json
 import re
 import time
 
+import logging
+
+# Setup Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("sync_debug.log", encoding='utf-8')
+    ]
+)
+
 DOWNLOAD_HISTORY_FILE = "download_history.json"
 ID_MAP_FILE = "id_map.json"
 
@@ -95,16 +107,19 @@ def send_to_metube(metube_url, video_url, folder_name):
 
 def load_download_history():
     if not os.path.exists(DOWNLOAD_HISTORY_FILE):
-        return set()
+        return []
     try:
         with open(DOWNLOAD_HISTORY_FILE, 'r') as f:
-            return set(json.load(f))
+            data = json.load(f)
+            if isinstance(data, list):
+                return data
+            return list(data) # Handle case where file was saved as list but read weirdly, or if strictly needed
     except:
-        return set()
+        return []
 
-def save_download_history(history_set):
+def save_download_history(history_list):
     with open(DOWNLOAD_HISTORY_FILE, 'w') as f:
-        json.dump(list(history_set), f)
+        json.dump(history_list, f, indent=4, ensure_ascii=False)
 
 def load_id_map():
     if os.path.exists(ID_MAP_FILE):
@@ -151,6 +166,7 @@ def monitor_downloads(metube_url, expected_items):
 
     print(f"\n[모니터링] {len(expected_ids)}개의 항목 완료 대기 중...")
     id_map = load_id_map()
+    down_history = load_download_history()
     pending = set(expected_ids)
     
     while pending:
@@ -163,6 +179,8 @@ def monitor_downloads(metube_url, expected_items):
                 
                 # Check for finished items
                 found = []
+                history_changed = False
+                
                 for item in done:
                     vid = item.get('id')
                     if vid in pending:
@@ -179,16 +197,29 @@ def monitor_downloads(metube_url, expected_items):
                         if filename:
                             # 경로 제거하고 파일명만 유지
                             filename = os.path.basename(filename)
+                            
+                            # Update Map & Move to End (Recent)
+                            if vid in id_map:
+                                del id_map[vid]
                             id_map[vid] = filename
+                            
                             title = items_info[vid].get('title', vid)
                             print(f"  [완료] {title} -> {filename}")
                             found.append(vid)
+                            
+                            if vid in down_history:
+                                down_history.remove(vid)
+                            down_history.append(vid)
+                            history_changed = True
                 
                 for vid in found:
                     pending.remove(vid)
                     
                 if found:
                     save_id_map(id_map)
+                    
+                if history_changed:
+                    save_download_history(down_history)
                 
                 # Check if remaining pending items are actually in queue
                 active_ids = {item.get('id') for item in queue}
@@ -224,15 +255,22 @@ def sync_id_map_from_metube(metube_url):
     MeTube 히스토리에서 전체 기록을 가져와 로컬 id_map을 업데이트합니다.
     이전에 다운로드된 항목들의 매핑 정보를 복구하는 데 도움이 됩니다.
     """
-    print("MeTube 히스토리에서 ID 매핑 동기화 중...")
+
+    logging.info("MeTube 히스토리에서 ID 매핑 동기화 중...")
     try:
+        logging.info(f"Connecting to MeTube at: {metube_url}/history")
         resp = requests.get(f"{metube_url}/history", timeout=5)
+        logging.info(f"MeTube Response Code: {resp.status_code}")
+        
         if resp.status_code == 200:
             data = resp.json()
             done = data.get('done', [])
+            logging.info(f"Fetched {len(done)} done items from MeTube.")
             
             id_map = load_id_map()
+            down_history = load_download_history()
             updated = False
+            history_updated = False
             
             for item in done:
                 vid = item.get('id')
@@ -242,14 +280,31 @@ def sync_id_map_from_metube(metube_url):
                     if vid not in id_map:
                         id_map[vid] = filename
                         updated = True
+                        logging.info(f"New history item mapped: {vid} -> {filename}")
+                    else:
+                        # Existing item: Move to end to mark as 'Recent'
+                        del id_map[vid]
+                        id_map[vid] = filename
+                        updated = True # Force save to persist order change
+                    
+                    if vid in down_history:
+                        down_history.remove(vid)
+                    down_history.append(vid)
+                    history_updated = True
             
             if updated:
                 save_id_map(id_map)
-                print(f"히스토리에서 {len(done)}개의 항목으로 id_map 업데이트 완료.")
+                logging.info(f"히스토리에서 {len(done)}개의 항목으로 id_map 업데이트 완료.")
             else:
-                print("ID 매핑이 최신 상태입니다.")
+                logging.info("ID 매핑이 최신 상태입니다.")
+                
+            if history_updated:
+                save_download_history(down_history)
+                logging.info(f"MeTube 기록을 기반으로 다운로드 기록 동기화 완료.")
+        else:
+            logging.error(f"MeTube responded with error: {resp.text}")
     except Exception as e:
-        print(f"id_map 동기화 실패: {e}")
+        logging.error(f"id_map 동기화 실패: {e}")
 
 def main():
     # 1. 설정 로드
@@ -262,6 +317,8 @@ def main():
     
     down_history = load_download_history()
     id_map = load_id_map()
+    
+
     
     total_newly_added = []
     

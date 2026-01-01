@@ -179,13 +179,31 @@ def save_config():
 @app.route('/api/history', methods=['GET'])
 def get_history():
     id_map_path = os.path.join(PROJECT_ROOT, 'id_map.json')
+    history_path = os.path.join(PROJECT_ROOT, 'download_history.json')
+    
     try:
-        if not os.path.exists(id_map_path):
-            return jsonify({}) # Return empty object if no history yet
+        id_map = {}
+        if os.path.exists(id_map_path):
+            with open(id_map_path, 'r', encoding='utf-8') as f:
+                id_map = json.load(f)
+                
+        history_ids = []
+        if os.path.exists(history_path):
+            with open(history_path, 'r', encoding='utf-8') as f:
+                history_ids = json.load(f)
+        
+
+
+        # Construct ordered list
+        result = []
+        # Reverse to show latest first
+        for vid in reversed(history_ids):
+            result.append({
+                'id': vid,
+                'filename': id_map.get(vid, f"ID: {vid}")
+            })
             
-        with open(id_map_path, 'r', encoding='utf-8') as f:
-            history = json.load(f)
-        return jsonify(history)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

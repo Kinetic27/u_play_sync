@@ -166,8 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/api/history?t=' + new Date().getTime())
             .then(res => res.json())
             .then(data => {
-                // Convert object {id: filename} to array [{id, filename}] and reverse to show latest first
-                fullHistory = Object.entries(data).map(([id, filename]) => ({ id, filename })).reverse();
+                // Data is now an ordered array [{id, filename}, ...] from backend
+                fullHistory = data;
                 renderHistory(fullHistory);
             })
             .catch(err => console.error('Error fetching history:', err));
