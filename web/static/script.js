@@ -173,6 +173,25 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.error('Error fetching history:', err));
     }
 
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm('모든 다운로드 기록을 삭제하시겠습니까?')) {
+                fetch('/api/history', { method: 'DELETE' })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            fullHistory = [];
+                            renderHistory([]);
+                        } else {
+                            alert('삭제 실패: ' + data.error);
+                        }
+                    })
+                    .catch(err => console.error('Error clearing history:', err));
+            }
+        });
+    }
+
     function renderHistory(items) {
         historyTableBody.innerHTML = '';
         if (items.length === 0) {

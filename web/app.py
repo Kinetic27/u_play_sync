@@ -207,5 +207,15 @@ def get_history():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/history', methods=['DELETE'])
+def clear_history():
+    try:
+        history_path = os.path.join(PROJECT_ROOT, 'download_history.json')
+        with open(history_path, 'w', encoding='utf-8') as f:
+            json.dump([], f)
+        return jsonify({'status': 'success', 'message': '기록이 삭제되었습니다.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

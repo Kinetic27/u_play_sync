@@ -415,7 +415,9 @@ def main():
 
             if send_to_metube(metube_url, video_url, pl['metube_folder']):
                 added_count += 1
-                down_history.add(vid)
+                if vid in down_history:
+                    down_history.remove(vid)
+                down_history.append(vid)
                 current_batch_items.append({'id': vid, 'title': title, 'url': video_url})
         
         if current_batch_items:
