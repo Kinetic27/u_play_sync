@@ -841,3 +841,254 @@ input[type="number"] {
     font-size: 0.9em;
     color: #ddd;
 }
+
+/* Management page */
+body.manage-page {
+    align-items: flex-start;
+    padding: 32px 0;
+}
+
+.manage-container {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    max-height: none;
+    overflow: visible;
+}
+
+.manage-main {
+    gap: 1.25rem;
+    overflow: visible;
+}
+
+.manage-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.summary-card,
+.manage-section,
+.playlist-panel,
+.queue-item,
+.empty-state {
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.summary-card {
+    padding: 18px;
+}
+
+.summary-value {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: var(--primary-color);
+}
+
+.summary-label,
+.muted,
+.item-meta {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.85rem;
+}
+
+.manage-section {
+    padding: 20px;
+    margin-top: 18px;
+}
+
+.section-title-row,
+.playlist-panel-header,
+.queue-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.section-title-row {
+    margin-bottom: 14px;
+}
+
+.section-title-row h2 {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.playlist-panels {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.playlist-panel {
+    padding: 18px;
+}
+
+.playlist-panel h3 {
+    margin-bottom: 4px;
+}
+
+.status-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.queue-list,
+.trash-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.queue-item {
+    padding: 12px 14px;
+}
+
+.item-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.item-status {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    white-space: nowrap;
+}
+
+.status-downloaded,
+.status-completed {
+    background: rgba(42, 211, 132, 0.22);
+    color: #78ffbd;
+}
+
+.status-failed,
+.status-missing {
+    background: rgba(255, 90, 90, 0.22);
+    color: #ff9d9d;
+}
+
+.status-queued,
+.status-running {
+    background: rgba(0, 255, 255, 0.18);
+    color: var(--primary-color);
+}
+
+.status-trashed,
+.status-canceled {
+    background: rgba(255, 191, 0, 0.18);
+    color: #ffd166;
+}
+
+.manage-table-wrap {
+    max-height: 460px;
+    overflow: auto;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.manage-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.manage-table th,
+.manage-table td {
+    padding: 11px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+    vertical-align: top;
+}
+
+.manage-table th {
+    position: sticky;
+    top: 0;
+    background: rgba(15, 12, 41, 0.95);
+    z-index: 1;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.82rem;
+}
+
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.tiny-button {
+    border: 1px solid rgba(0, 255, 255, 0.45);
+    color: white;
+    background: rgba(0, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    font-weight: 700;
+}
+
+.tiny-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: rgba(0, 255, 255, 0.22);
+}
+
+.tiny-button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.tiny-button.danger {
+    border-color: rgba(255, 90, 90, 0.6);
+    background: rgba(255, 90, 90, 0.14);
+}
+
+.empty-state {
+    padding: 22px;
+    color: rgba(255, 255, 255, 0.58);
+    text-align: center;
+}
+
+.empty-state.compact {
+    padding: 14px;
+    margin-top: 10px;
+}
+
+.error-text {
+    color: #ff9d9d;
+    font-size: 0.83rem;
+}
+
+.icon-button[href] {
+    text-decoration: none;
+}
+
+@media (max-width: 820px) {
+    .glass-container.manage-container {
+        width: 96%;
+        padding: 1.5rem;
+    }
+
+    .section-title-row,
+    .playlist-panel-header,
+    .queue-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .row-actions {
+        justify-content: flex-start;
+    }
+}

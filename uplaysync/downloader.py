@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Any
 
 
+class DownloadCancelled(Exception):
+    """Raised internally when a queued download is cancelled."""
+
+
 @dataclass
 class DownloadResult:
     ok: bool
@@ -15,6 +19,7 @@ class DownloadResult:
     path: str | None = None
     error: str | None = None
     preexisting: bool = False
+    cancelled: bool = False
 
 
 class DirectYtdlpDownloader:
@@ -30,9 +35,9 @@ class DirectYtdlpDownloader:
 
         return yt_dlp.YoutubeDL
 
-    def build_options(self, folder: str | Path) -> dict[str, Any]:
+    def build_options(self, folder: str | Path, cancel_event=None) -> dict[str, Any]:
         folder = Path(folder)
-        return {
+        opts = {
             "format": "bestaudio[ext=m4a]/bestaudio/best",
             "outtmpl": str(folder / "%(title)s.%(ext)s"),
             "noplaylist": True,
@@ -47,12 +52,20 @@ class DirectYtdlpDownloader:
                 }
             ],
         }
+        if cancel_event is not None:
+            def _cancel_hook(_status):
+                if cancel_event.is_set():
+                    raise DownloadCancelled("download cancelled")
+            opts["progress_hooks"] = [_cancel_hook]
+        return opts
 
-    def download(self, *, url: str, video_id: str, title: str | None, folder: str | Path) -> DownloadResult:
+    def download(self, *, url: str, video_id: str, title: str | None, folder: str | Path, cancel_event=None) -> DownloadResult:
         folder_path = Path(folder)
         folder_path.mkdir(parents=True, exist_ok=True)
         before = {p.name for p in folder_path.iterdir() if p.is_file()}
-        opts = self.build_options(folder_path)
+        if cancel_event is not None and cancel_event.is_set():
+            return DownloadResult(False, video_id, title, url, error="download cancelled", cancelled=True)
+        opts = self.build_options(folder_path, cancel_event=cancel_event)
         try:
             ydl_cls = self._youtube_dl_cls()
             with ydl_cls(opts) as ydl:
@@ -69,6 +82,8 @@ class DirectYtdlpDownloader:
                 path=str(final_path),
                 preexisting=final_path.name in before,
             )
+        except DownloadCancelled as exc:
+            return DownloadResult(False, video_id, title, url, error=str(exc), cancelled=True)
         except Exception as exc:  # yt-dlp raises many concrete exception types
             return DownloadResult(False, video_id, title, url, error=str(exc))
 

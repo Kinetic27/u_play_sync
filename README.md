@@ -35,6 +35,8 @@ docker compose up --build
 
 웹 UI는 기본적으로 `http://localhost:5000`에서 실행됩니다.
 
+관리 페이지는 `http://localhost:5000/manage`에서 확인할 수 있습니다. 이 페이지는 마지막 플레이리스트 스냅샷 기준 상태, 다운로드 큐, 휴지통 복원/재다운로드 작업을 제공합니다. 하드 삭제는 하지 않고 같은 폴더의 `.uplaysync-trash`로 이동합니다.
+
 ## 작동 방식
 
 1. `config.yaml`의 playlist 목록을 읽습니다.
@@ -65,7 +67,7 @@ retry_failed: false
 
 ## 상태 파일
 
-- `sync_state.json`: canonical state (local default)
+- `sync_state.json`: canonical state (local default). 관리 페이지의 플레이리스트 스냅샷, 다운로드 큐, 휴지통 메타데이터도 이 파일 안에 저장됩니다.
 - `id_map.json`: legacy mirror
 - `download_history.json`: legacy mirror
 

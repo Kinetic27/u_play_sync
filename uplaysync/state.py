@@ -188,7 +188,7 @@ def write_legacy_mirror(state: dict[str, Any], id_map_path: Path, history_path: 
         status = entry.get("status")
         if status == "failed":
             id_map[vid] = f"ERROR: {entry.get('failure_reason') or 'unknown error'}"
-        elif entry.get("filename"):
+        elif status == "downloaded" and entry.get("filename"):
             id_map[vid] = entry["filename"]
     history = [vid for vid in state.get("history", []) if vid in state.get("items", {})]
     _atomic_write_json(id_map_path, id_map)

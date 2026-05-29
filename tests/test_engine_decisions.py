@@ -125,6 +125,39 @@ class EngineDecisionTests(unittest.TestCase):
             self.assertTrue((folder / 'New Song.m4a').exists())
             self.assertEqual(result['state']['items']['new1']['filename'], 'New Song.m4a')
 
+
+    def test_trashed_item_is_not_redownloaded_by_regular_sync(self):
+        with tempfile.TemporaryDirectory() as td:
+            folder = Path(td)
+            media = folder / 'Deleted Song.m4a'
+            media.write_text('audio', encoding='utf-8')
+            st = state.empty_state()
+            state.record_downloaded(
+                st,
+                video_id='del1',
+                title='Deleted Song',
+                url='https://youtu.be/del1',
+                playlist_name='P',
+                folder=str(folder),
+                filename='Deleted Song.m4a',
+            )
+            from uplaysync import management
+            management.move_entry_to_trash(st, 'del1')
+            state.save_state(st, folder / 'sync_state.json', folder / 'id_map.json', folder / 'download_history.json')
+            fake = FakeDownloader()
+
+            result = engine.sync_playlists(
+                {'playlists': [{'name': 'P', 'url': 'playlist', 'folder': str(folder)}]},
+                state_path=folder / 'sync_state.json',
+                id_map_path=folder / 'id_map.json',
+                history_path=folder / 'download_history.json',
+                playlist_provider=lambda _: [{'id': 'del1', 'title': 'Deleted Song', 'url': 'del1'}],
+                downloader=fake,
+            )
+
+            self.assertEqual(fake.calls, [])
+            self.assertEqual(result['summary']['trashed'], 1)
+
     def test_preexisting_ytdlp_output_records_state_without_failure(self):
         with tempfile.TemporaryDirectory() as td:
             folder = Path(td)

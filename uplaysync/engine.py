@@ -8,6 +8,7 @@ from typing import Any, Callable, Iterable
 from .config import load_config
 from .downloader import DirectYtdlpDownloader, DownloadResult
 from .lock import AlreadyRunningError, ProcessLock
+from .management import record_playlist_snapshot
 from .matching import find_existing_file_match, get_existing_files
 from .playlist import get_playlist_items
 from .state import (
@@ -53,6 +54,8 @@ def should_queue_item(
         status = entry.get("status")
         if status == "failed" and not retry_failed:
             return False, "previous failure recorded", entry.get("filename")
+        if status == "trashed":
+            return False, "user trashed", entry.get("filename")
         if file_exists_for_entry(entry, folder):
             return False, "state file exists", entry.get("filename")
         if status == "downloaded" and entry.get("filename"):
@@ -97,11 +100,12 @@ def sync_playlists(
         "already_synced": 0,
         "existing_matched": 0,
         "previous_failed": 0,
+        "trashed": 0,
         "missing_metadata": 0,
         "redownload": 0,
     }
 
-    for playlist in config.get("playlists", []) or []:
+    for playlist_index, playlist in enumerate(config.get("playlists", []) or []):
         name = playlist.get("name") or playlist.get("url") or "playlist"
         folder = playlist.get("folder")
         url = playlist.get("url")
@@ -112,6 +116,7 @@ def sync_playlists(
         print(f"\n플레이리스트 처리 중: {name}")
         existing_files_map = get_existing_files(folder)
         items = playlist_provider(url)
+        record_playlist_snapshot(state, playlist, items, index=playlist_index)
         print(f"플레이리스트에서 {len(items)}개의 항목을 발견했습니다.")
 
         for item in items:
@@ -133,6 +138,8 @@ def sync_playlists(
                     summary["existing_matched"] += 1
                 elif reason == "previous failure recorded":
                     summary["previous_failed"] += 1
+                elif reason == "user trashed":
+                    summary["trashed"] += 1
                 elif reason == "missing id/title":
                     summary["missing_metadata"] += 1
                 continue
@@ -186,7 +193,7 @@ def sync_playlists(
     print(
         f"\n요약: 확인 {summary['checked']}개, 새 다운로드 {summary['downloaded']}개, "
         f"이미 있음 {already_done}개, 이전 실패 스킵 {summary['previous_failed']}개, "
-        f"신규 실패 {summary['failed']}개"
+        f"휴지통 스킵 {summary['trashed']}개, 신규 실패 {summary['failed']}개"
     )
     return {"state": state, "summary": summary}
 

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPlaySync 관리</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><polygon points=%2235,30 35,70 75,50%22 fill=%22%23ffffff%22/></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css?v=7">
+</head>
+<body class="manage-page">
+    <div class="background-gradient"></div>
+
+    <div class="glass-container manage-container">
+        <div class="background-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+        </div>
+
+        <header>
+            <div class="logo">
+                <i class="fa-brands fa-youtube" style="color: #ff0000;"></i> UPlaySync 관리
+            </div>
+            <div class="header-controls">
+                <div class="status-badge" id="manageStatusBadge">
+                    <span class="dot"></span>
+                    <span id="manageStatusText">불러오는 중</span>
+                </div>
+                <button id="reloadManageBtn" class="icon-button" title="새로고침">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <a href="/" class="icon-button" title="메인으로">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+            </div>
+        </header>
+
+        <main class="manage-main">
+            <section class="manage-summary" id="manageSummary"></section>
+
+            <section class="manage-section">
+                <div class="section-title-row">
+                    <h2><i class="fa-solid fa-bars-progress"></i> 다운로드 큐</h2>
+                    <span class="muted">새로고침 없이 자동 갱신</span>
+                </div>
+                <div id="queueList" class="queue-list"></div>
+            </section>
+
+            <section class="manage-section">
+                <div class="section-title-row">
+                    <h2><i class="fa-solid fa-list"></i> 플레이리스트 상태</h2>
+                    <span class="muted">마지막 스캔 기준, 플레이리스트별 수동 갱신 가능</span>
+                </div>
+                <div id="playlistPanels" class="playlist-panels"></div>
+            </section>
+
+            <section class="manage-section">
+                <div class="section-title-row">
+                    <h2><i class="fa-solid fa-trash-arrow-up"></i> 휴지통</h2>
+                    <span class="muted">하드 삭제 없음 · 복원 또는 재다운로드</span>
+                </div>
+                <div id="trashList" class="trash-list"></div>
+            </section>
+
+            <section class="manage-section" id="orphanSection" style="display:none;">
+                <div class="section-title-row">
+                    <h2><i class="fa-solid fa-circle-question"></i> 현재 스냅샷 밖의 기록</h2>
+                    <span class="muted">이전 기록에는 있으나 현재 플레이리스트 스냅샷에 없는 항목</span>
+                </div>
+                <div id="orphanList" class="trash-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/manage.js?v=1"></script>
+</body>
+</html>
