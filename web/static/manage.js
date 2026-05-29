@@ -3,8 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const queueEl = document.getElementById('queueList');
     const playlistPanelsEl = document.getElementById('playlistPanels');
     const trashEl = document.getElementById('trashList');
-    const orphanEl = document.getElementById('orphanList');
-    const orphanSection = document.getElementById('orphanSection');
     const statusBadge = document.getElementById('manageStatusBadge');
     const statusText = document.getElementById('manageStatusText');
     const reloadBtn = document.getElementById('reloadManageBtn');
@@ -72,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderQueue(data.queue || []);
         renderPlaylists(data.playlists || []);
         renderTrash(data.trash || []);
-        renderOrphans(data.orphan_items || []);
     }
 
     function renderSummary(summary) {
@@ -80,8 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ['플레이리스트', summary.playlists || 0],
             ['스캔 항목', summary.items || 0],
             ['큐 활성', summary.queue_active || 0],
-            ['휴지통', summary.trash || 0],
-            ['스냅샷 밖', summary.orphan_items || 0]
+            ['휴지통', summary.trash || 0]
         ];
         summaryEl.innerHTML = cards.map(([label, value]) => `
             <div class="summary-card">
@@ -228,18 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    function renderOrphans(items) {
-        orphanSection.style.display = items.length ? 'block' : 'none';
-        orphanEl.innerHTML = items.map(item => `
-            <div class="queue-item">
-                <div>
-                    <div class="item-title">${esc(item.title || item.video_id)}</div>
-                    <div class="item-meta">${badge(item.status)} ${esc(item.video_id)} · ${esc(item.filename || '')}</div>
-                </div>
-                <div class="row-actions">${itemActions(item)}</div>
-            </div>
-        `).join('');
-    }
 
     function badge(status) {
         const cls = String(status || 'unknown').replace(/[^a-z0-9_-]/gi, '');

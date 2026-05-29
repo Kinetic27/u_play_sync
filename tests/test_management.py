@@ -111,3 +111,22 @@ class ManagementStateTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class ManagementViewFilteringTests(unittest.TestCase):
+    def test_items_outside_playlist_snapshots_are_hidden_from_management_view(self):
+        st = state.empty_state()
+        st['items']['metube1'] = {
+            'video_id': 'metube1',
+            'title': 'Manual MeTube Download',
+            'url': 'https://www.youtube.com/watch?v=metube1',
+            'playlist_names': [],
+            'folder': '/youtube',
+            'filename': 'Manual MeTube Download.m4a',
+            'status': 'downloaded',
+        }
+
+        view = management.build_management_view({'playlists': []}, st)
+
+        self.assertNotIn('orphan_items', view)
+        self.assertNotIn('orphan_items', view['summary'])
+        self.assertEqual(view['summary']['items'], 0)

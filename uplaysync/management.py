@@ -323,7 +323,6 @@ def status_for_item(state: dict[str, Any], item: dict[str, Any]) -> tuple[str, d
 def build_management_view(config: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
     ensure_management_sections(state)
     playlists_out = []
-    seen_video_ids: set[str] = set()
     for index, playlist in enumerate(config.get("playlists", []) or []):
         key = playlist_key(playlist, index)
         snapshot = (state.get("playlist_snapshots", {}) or {}).get(key, {})
@@ -333,8 +332,6 @@ def build_management_view(config: dict[str, Any], state: dict[str, Any]) -> dict
             status, source = status_for_item(state, item)
             counts[status] = counts.get(status, 0) + 1
             video_id = item.get("video_id")
-            if video_id:
-                seen_video_ids.add(video_id)
             entry = source if isinstance(source, dict) and source.get("video_id") == video_id else state.get("items", {}).get(video_id, {})
             items_out.append({
                 **item,
@@ -358,28 +355,6 @@ def build_management_view(config: dict[str, Any], state: dict[str, Any]) -> dict
             "items": items_out,
         })
 
-    orphan_items = []
-    for video_id, entry in sorted((state.get("items", {}) or {}).items()):
-        if video_id in seen_video_ids:
-            continue
-        status = entry.get("status") or "unknown"
-        if status == "downloaded" and not file_exists_for_entry(entry):
-            status = "missing"
-        orphan_items.append({
-            "video_id": video_id,
-            "title": entry.get("title") or entry.get("filename") or video_id,
-            "url": entry.get("url"),
-            "playlist_name": ", ".join(entry.get("playlist_names") or []),
-            "folder": entry.get("folder"),
-            "status": status,
-            "filename": entry.get("filename"),
-            "failure_reason": entry.get("failure_reason"),
-            "attempt_count": entry.get("attempt_count"),
-            "updated_at": entry.get("updated_at"),
-            "downloaded_at": entry.get("downloaded_at"),
-            "trash_path": entry.get("trash_path"),
-        })
-
     queue = list(state.get("queue", []) or [])
     trash = [
         {"video_id": vid, **entry}
@@ -388,7 +363,6 @@ def build_management_view(config: dict[str, Any], state: dict[str, Any]) -> dict
     ]
     return {
         "playlists": playlists_out,
-        "orphan_items": orphan_items,
         "queue": queue,
         "trash": trash,
         "summary": {
@@ -396,6 +370,5 @@ def build_management_view(config: dict[str, Any], state: dict[str, Any]) -> dict
             "items": sum(p["count"] for p in playlists_out),
             "queue_active": sum(1 for job in queue if job.get("status") in QUEUE_ACTIVE_STATUSES),
             "trash": len(trash),
-            "orphan_items": len(orphan_items),
         },
     }
