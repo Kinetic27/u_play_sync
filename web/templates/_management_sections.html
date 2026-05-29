@@ -1,0 +1,33 @@
+<section class="manage-summary" id="manageSummary"></section>
+
+<section class="manage-section">
+    <div class="section-title-row">
+        <h2><i class="fa-solid fa-bars-progress"></i> 다운로드 큐</h2>
+        <span class="muted">새로고침 없이 자동 갱신</span>
+    </div>
+    <div id="queueList" class="queue-list"></div>
+</section>
+
+<section class="manage-section">
+    <div class="section-title-row">
+        <h2><i class="fa-solid fa-list"></i> 플레이리스트 상태</h2>
+        <span class="muted">마지막 스캔 기준, 플레이리스트별 수동 갱신 가능</span>
+    </div>
+    <div id="playlistPanels" class="playlist-panels"></div>
+</section>
+
+<section class="manage-section">
+    <div class="section-title-row">
+        <h2><i class="fa-solid fa-trash-arrow-up"></i> 휴지통</h2>
+        <span class="muted">하드 삭제 없음 · 복원 또는 재다운로드</span>
+    </div>
+    <div id="trashList" class="trash-list"></div>
+</section>
+
+<section class="manage-section" id="orphanSection" style="display:none;">
+    <div class="section-title-row">
+        <h2><i class="fa-solid fa-circle-question"></i> 현재 스냅샷 밖의 기록</h2>
+        <span class="muted">이전 기록에는 있으나 현재 플레이리스트 스냅샷에 없는 항목</span>
+    </div>
+    <div id="orphanList" class="trash-list"></div>
+</section>
