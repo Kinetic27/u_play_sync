@@ -7,7 +7,7 @@
     <!-- Favicon: Red Play Button -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff0000%22/><polygon points=%2235,30 35,70 75,50%22 fill=%22%23ffffff%22/></svg>">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
     <div class="background-gradient"></div>
@@ -80,13 +80,6 @@
                 </div>
             </div>
             
-            <div class="config-section">
-                <h3>미디어 서버 주소</h3>
-                <div class="config-card">
-                    <input type="text" id="metubeUrl" placeholder="http://localhost:8081">
-                </div>
-            </div>
-
             <div class="config-section">
                 <h3>자동 동기화 주기</h3>
                 <div class="config-card" style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px;">
@@ -175,11 +168,10 @@
             <input type="text" class="pl-name" placeholder="이름 (예: K-Pop)">
             <input type="text" class="pl-url" placeholder="YouTube Playlist URL">
             <input type="text" class="pl-folder" placeholder="저장 폴더 (/music)">
-            <input type="text" class="pl-metube" placeholder="서버 내 경로 (optional)">
             <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
         </div>
     </template>
 
-    <script src="/static/script.js?v=2"></script>
+    <script src="/static/script.js?v=4"></script>
 </body>
 </html>

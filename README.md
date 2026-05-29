@@ -1,49 +1,87 @@
 # UPlaySync 사용 가이드
 
-이 문서는 플레이리스트를 미디어 서버를 통해 로컬 디렉토리와 동기화하는 `sync.py` 스크립트의 사용법을 설명합니다.
+UPlaySync는 YouTube playlist를 로컬/Jellyfin용 오디오 폴더와 동기화하는 도구입니다. 현재 자동 동기화 경로는 MeTube `/add`/`/history`에 의존하지 않고 `yt-dlp`를 직접 사용합니다. MeTube 앱은 별도 수동 다운로드 도구로 계속 사용할 수 있습니다.
+
+## 핵심 정책
+
+- 기존 `.m4a` 파일명은 대량 변경하지 않습니다.
+- 새 다운로드 파일명은 MeTube 기본 출력과 호환되는 제목 기반 형식(`%(title)s.%(ext)s`)을 유지합니다.
+- 중복/삭제/실패 판단은 `sync_state.json`의 video id 기반 상태를 우선 사용합니다.
+- `id_map.json`과 `download_history.json`은 첫 실행 시 `sync_state.json`으로 마이그레이션되며, 호환성을 위해 mirror로 계속 기록됩니다.
 
 ## 사전 요구 사항
 
-1.  **서버 실행**: 미디어 서버 컨테이너가 `http://localhost:8081`에서 실행 중이어야 합니다.
-2.  **가상 환경**: 프로젝트 디렉토리 내에 Python 가상 환경이 설정되어 있어야 합니다.
+1. Python 3.11+ 또는 Docker 환경
+2. `ffmpeg` 설치: `yt-dlp` 오디오 후처리에 필요합니다.
+3. Python dependencies:
+
+```bash
+pip install -r requirements.txt Flask
+```
 
 ## 동기화 실행 방법
 
-터미널에서 다음 명령어를 실행하여 동기화를 시작합니다:
-
 ```bash
 cd /home/kinetic27/programming/uplaysync
-source venv/bin/activate
 python3 sync.py
 ```
 
+Docker/compose 사용 시 state directory가 `/app/state`에 mount되고 `UPLAYSYNC_STATE_FILE=/app/state/sync_state.json`로 보존됩니다.
+
+```bash
+mkdir -p state
+docker compose up --build
+```
+
+웹 UI는 기본적으로 `http://localhost:5000`에서 실행됩니다.
+
 ## 작동 방식
 
-1.  `config.yaml`에 정의된 플레이리스트 목록을 불러옵니다.
-2.  각 플레이리스트에 대해:
-    *   원격지에서 최신 곡 목록을 가져옵니다.
-    *   로컬 폴더를 스캔하여 이미 다운로드된 곡을 확인합니다.
-    *   **누락된 곡**이 있다면 서버 API를 통해 다운로드를 요청합니다.
-3.  **큐 모니터링 & 파일명 매핑 (New)**:
-    *   스크립트가 서버의 다운로드 대기열을 실시간으로 감시합니다.
-    *   다운로드가 완료되면 최종 파일명을 추적하여 내부 데이터베이스(`id_map.json`)에 저장합니다.
-    *   이 매핑 정보를 통해 다음 실행 시 파일명이 달라도(예: "Mr. Hong" vs "미스터 홍") 중복 다운로드를 방지합니다.
-    *   서버에서 에러가 발생한 항목은 자동으로 감지하고 처리합니다.
+1. `config.yaml`의 playlist 목록을 읽습니다.
+2. `yt-dlp`로 playlist metadata를 가져옵니다.
+3. 각 playlist folder의 기존 파일을 title-compatible 방식으로 인덱싱합니다.
+4. `sync_state.json`의 video id 상태와 실제 파일 존재 여부를 확인합니다.
+5. 이미 받은 파일은 건너뜁니다.
+6. state에는 있지만 실제 파일이 삭제된 항목은 다시 다운로드 대상으로 봅니다.
+7. 새 항목은 `yt-dlp`로 직접 m4a 오디오를 다운로드합니다.
+8. 성공/실패 상태를 `sync_state.json`에 기록하고 legacy `id_map.json`/`download_history.json`도 mirror합니다.
 
-## 설정 변경
+## 설정
 
-`config.yaml` 파일을 수정하여 플레이리스트를 추가하거나 경로를 변경할 수 있습니다.
+기존 설정은 그대로 유지됩니다.
 
 ```yaml
-metube_url: "http://localhost:8081" # 미디어 서버 주소
+metube_url: "http://localhost:8081" # legacy/manual compatibility; direct backend does not require it
 playlists:
   - name: "플레이리스트 이름"
     url: "https://example.com/playlist?list=..."
     folder: "/로컬/저장/경로"
-    metube_folder: "서버내/저장/경로"
+    metube_folder: "서버내/저장/경로" # legacy/manual compatibility
+schedule_interval: 8
+retry_failed: false
 ```
 
-## 문제 해결
+`retry_failed: false`가 기본입니다. 실패/비공개/차단 항목은 무한 재시도하지 않고 상태에 남깁니다.
 
-*   **`ModuleNotFoundError`**: `source venv/bin/activate`를 실행했는지 확인하세요.
-*   **서버 연결 오류**: 서버가 실행 중인지, `config.yaml`의 주소가 올바른지 확인하세요.
+## 상태 파일
+
+- `sync_state.json`: canonical state (local default)
+- `id_map.json`: legacy mirror
+- `download_history.json`: legacy mirror
+
+첫 migration 전에는 `*.bak-sync-state-migration-YYYYMMDD-HHMMSS` 백업을 생성합니다.
+
+## 테스트
+
+```bash
+python -m unittest discover -s tests
+python -m py_compile sync.py web/app.py $(find uplaysync -name '*.py' -print)
+```
+
+테스트는 임시 폴더와 mock downloader를 사용하며 live media 폴더에 쓰지 않습니다.
+
+## 주의
+
+- MeTube 앱 자체는 제거하지 않습니다.
+- 기존 Jellyfin media 파일을 대량 rename/delete하지 않습니다.
+- live media 경로에서 실험하지 말고 staging 폴더로 smoke test를 먼저 수행하세요.

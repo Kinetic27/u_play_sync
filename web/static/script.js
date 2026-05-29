@@ -117,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveConfigBtn = document.getElementById('saveConfigBtn');
     const addPlaylistBtn = document.getElementById('addPlaylistBtn');
     const playlistContainer = document.getElementById('playlistContainer');
-    const metubeUrlInput = document.getElementById('metubeUrl');
     const scheduleIntervalInput = document.getElementById('scheduleInterval');
     const playlistItemTemplate = document.getElementById('playlistItemTemplate');
     
@@ -250,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(res => res.json())
             .then(data => {
                 currentConfig = data;
-                metubeUrlInput.value = data.metube_url || '';
                 scheduleIntervalInput.value = data.schedule_interval || 0;
                 
                 const lastRunDisplay = document.getElementById('lastRunDisplay');
@@ -274,17 +272,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPlaylists(playlists) {
         playlistContainer.innerHTML = '';
-        playlists.forEach(pl => addPlaylistItem(pl));
+        playlists.forEach((pl, index) => addPlaylistItem(pl, index));
     }
 
-    function addPlaylistItem(pl = {}) {
+    function addPlaylistItem(pl = {}, index = null) {
         const clone = playlistItemTemplate.content.cloneNode(true);
         const itemDiv = clone.querySelector('.playlist-item');
+        if (index !== null) {
+            itemDiv.dataset.configIndex = String(index);
+        }
         
         itemDiv.querySelector('.pl-name').value = pl.name || '';
         itemDiv.querySelector('.pl-url').value = pl.url || '';
         itemDiv.querySelector('.pl-folder').value = pl.folder || '';
-        itemDiv.querySelector('.pl-metube').value = pl.metube_folder || '';
         
         itemDiv.querySelector('.delete-btn').addEventListener('click', () => {
             itemDiv.remove();
@@ -301,20 +301,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const name = item.querySelector('.pl-name').value.trim();
             const url = item.querySelector('.pl-url').value.trim();
             const folder = item.querySelector('.pl-folder').value.trim();
-            const metube_folder = item.querySelector('.pl-metube').value.trim();
             
             if (name && url && folder) {
+                const index = Number.parseInt(item.dataset.configIndex || '-1', 10);
+                const original = Number.isInteger(index) && index >= 0 && currentConfig.playlists
+                    ? (currentConfig.playlists[index] || {})
+                    : {};
+                const { metube_folder, ...preserved } = original;
                 newPlaylists.push({
-                    name, 
-                    url, 
-                    folder,
-                    metube_folder: metube_folder || undefined
+                    ...preserved,
+                    name,
+                    url,
+                    folder
                 });
             }
         });
 
         const newConfig = {
-            metube_url: metubeUrlInput.value.trim(),
             schedule_interval: parseInt(scheduleIntervalInput.value) || 0,
             playlists: newPlaylists
         };

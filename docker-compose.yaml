@@ -1,21 +1,21 @@
-version: '3.8'
-
 services:
   uplaysync:
     build: .
     container_name: uplaysync
     ports:
-      - "5000:5000"
+      - "${UPLAYSYNC_PORT:-5000}:5000"
     volumes:
-      - ./config.yaml:/app/config.yaml
-      - ./download_history.json:/app/download_history.json
-      - ./id_map.json:/app/id_map.json
-      # Host download folder <-> Container mapping
-      # Mapping to the exact same path so config.yaml paths work
-      - /opt/youtube_dl/downloads:/opt/youtube_dl/downloads
+      - ${UPLAYSYNC_CONFIG_FILE:-./config.yaml}:/app/config.yaml
+      - ${UPLAYSYNC_HISTORY_FILE_HOST:-./download_history.json}:/app/download_history.json
+      - ${UPLAYSYNC_ID_MAP_FILE_HOST:-./id_map.json}:/app/id_map.json
+      - ${UPLAYSYNC_STATE_DIR:-./state}:/app/state
+      # Host MeTube/ytdl download folder <-> Container mapping
+      # Keep the container path aligned with config.yaml playlist folders.
+      - ${UPLAYSYNC_DOWNLOAD_ROOT:-/mnt/data-1/shared/ytdl}:/opt/youtube_dl/downloads
     environment:
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Seoul
+      - UPLAYSYNC_STATE_FILE=/app/state/sync_state.json
 
     extra_hosts:
       - "host.docker.internal:host-gateway" # Standard way to reach host
@@ -26,4 +26,3 @@ services:
 # networks:
 #   metube-net:
 #     external: true
-
