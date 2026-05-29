@@ -53,9 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadManage() {
+        const scrollState = captureScrollState();
         try {
             currentData = await api('/api/manage?t=' + Date.now());
             render(currentData);
+            restoreScrollState(scrollState);
             const active = currentData.summary?.queue_active || 0;
             setStatus(active > 0 ? 'running' : '', active > 0 ? `큐 ${active}개 진행/대기` : '대기 중');
         } catch (err) {
@@ -63,6 +65,36 @@ document.addEventListener('DOMContentLoaded', () => {
             setStatus('error', '오류');
             queueEl.innerHTML = `<div class="empty-state">관리 정보를 불러오지 못했습니다: ${esc(err.message)}</div>`;
         }
+    }
+
+    function captureScrollState() {
+        const tableScroll = {};
+        document.querySelectorAll('.playlist-panel[data-playlist-key]').forEach(panel => {
+            const key = panel.dataset.playlistKey;
+            const tableWrap = panel.querySelector('.manage-table-wrap');
+            if (key && tableWrap) {
+                tableScroll[key] = tableWrap.scrollTop;
+            }
+        });
+        return {
+            windowX: window.scrollX,
+            windowY: window.scrollY,
+            tableScroll
+        };
+    }
+
+    function restoreScrollState(scrollState) {
+        window.requestAnimationFrame(() => {
+            const panels = Array.from(document.querySelectorAll('.playlist-panel[data-playlist-key]'));
+            Object.entries(scrollState.tableScroll || {}).forEach(([key, scrollTop]) => {
+                const panel = panels.find(candidate => candidate.dataset.playlistKey === key);
+                const tableWrap = panel?.querySelector('.manage-table-wrap');
+                if (tableWrap) {
+                    tableWrap.scrollTop = scrollTop;
+                }
+            });
+            window.scrollTo(scrollState.windowX || 0, scrollState.windowY || 0);
+        });
     }
 
     function render(data) {
@@ -114,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         playlistPanelsEl.innerHTML = playlists.map(pl => `
-            <article class="playlist-panel">
+            <article class="playlist-panel" data-playlist-key="${esc(pl.key || pl.index)}">
                 <div class="playlist-panel-header">
                     <div>
                         <h3>${esc(pl.name)}</h3>
